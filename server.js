@@ -39,7 +39,7 @@ app.get('/location', (request,response) => {
     const newLocation = newLocation(searchedCity, apiReturned.body.formatted_query, apiReturned.body.latitude, apiReturned.body.longitude);
     response.status(200).send(newLocation);
   }).catch(error => {
-    response.status(500).send('There was an error');
+    response.status(500).send(error);
   })
 });
 
