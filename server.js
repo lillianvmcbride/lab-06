@@ -6,7 +6,8 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const {respons} = require('express');
+
+const superagent = require('superagent');
 
 const PORT = process.env.PORT;
 
@@ -18,7 +19,7 @@ app.get('/', (req,res) => {
 });
 
 function Location(searchedCity, display_name, lat, lon) {
-  this.searchedCity = searchedCity;
+  this.search_query = searchedCity;
   this.formatted_query = display_name;
   this.latitude = parseFloat(lat);
   this.longitude = parseFloat(lon);
@@ -35,10 +36,11 @@ app.get('/location', (request,response) => {
   const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${searchedCity}&format=json`;
 
   superagent.get(url).then(apiReturned => {
-    const newLocation = newLocation(searchedCity, apiReturned.body.formatted_query, apiReturned.body.latitude, apiReturned.body.longitude);
+    const returnedLocation = apiReturned.body[0];
+    const newLocation = new Location(searchedCity, returnedLocation.display_name, returnedLocation.lat, returnedLocation.lon);
     response.status(200).send(newLocation);
   }).catch(error => {
-    response.status(500).send('There was an error');
+    response.status(500).send(error);
   })
 });
 
@@ -46,19 +48,18 @@ app.get('/location', (request,response) => {
 app.get('/weather', (request, response) => {
   const latitude = parseFloat(request.query.latitude);
   const longitude = parseFloat(request.query.longitude);
-  const searchedCity = request.query.city;
+  const searchedCity = request.query.search_query;
   const apiKey = process.env.WEATHER_API_KEY;
   const url = `http://api.weatherbit.io/v2.0/forecast/daily`;
   const searchParameters = {
     key:apiKey, city:searchedCity, days:8
   };
 
-  const weatherArr = [];
   superagent.get(url).query(searchParameters).then(returnData => {
-    returnData.body.data.map( day => {
-      weatherArr.push(new Weather(day.weather.description,day.valid_date));
-    })
-    response.status(200).send(weatherArray);
+    let weatherArr = returnData.body.data.map( day => {
+      return new Weather(day.weather.description,day.valid_date);
+    });
+    response.status(200).send(weatherArr);
   }).catch(error => {
     response.status(500).send('There was an error');
   })
