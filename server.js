@@ -19,7 +19,7 @@ app.get('/', (req,res) => {
 });
 
 function Location(searchedCity, display_name, lat, lon) {
-  this.searchedCity = searchedCity;
+  this.search_query = searchedCity;
   this.formatted_query = display_name;
   this.latitude = parseFloat(lat);
   this.longitude = parseFloat(lon);
