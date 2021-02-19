@@ -36,7 +36,8 @@ app.get('/location', (request,response) => {
   const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${searchedCity}&format=json`;
 
   superagent.get(url).then(apiReturned => {
-    const newLocation = newLocation(searchedCity, apiReturned.body.formatted_query, apiReturned.body.latitude, apiReturned.body.longitude);
+    const returnedLocation = apiReturned.body[0];
+    const newLocation = new Location(searchedCity, returnedLocation.display_name, returnedLocation.lat, returnedLocation.lon);
     response.status(200).send(newLocation);
   }).catch(error => {
     response.status(500).send(error);
