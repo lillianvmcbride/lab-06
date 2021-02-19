@@ -55,11 +55,10 @@ app.get('/weather', (request, response) => {
     key:apiKey, city:searchedCity, days:8
   };
 
-  const weatherArr = [];
   superagent.get(url).query(searchParameters).then(returnData => {
-    returnData.body.data.map( day => {
-      weatherArr.push(new Weather(day.weather.description,day.valid_date));
-    })
+    let weatherArr = returnData.body.data.map( day => {
+      return new Weather(day.weather.description,day.valid_date);
+    });
     response.status(200).send(weatherArr);
   }).catch(error => {
     response.status(500).send('There was an error');
