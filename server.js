@@ -8,11 +8,14 @@ const app = express();
 const cors = require('cors');
 const {respons} = require('express');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
-app.use(express.static('/public'));
 app.use(cors());
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));
+
+app.get('/', (req,res) => {
+  res.send(`Connected on Port: ${PORT}`);
+});
 
 function Location(searchedCity, display_name, lat, lon) {
   this.searchedCity = searchedCity;
@@ -21,33 +24,46 @@ function Location(searchedCity, display_name, lat, lon) {
   this.longitude = parseFloat(lon);
 }
 
-app.get('/location', (request,response) => {
-  const locationDataArray = require('./data/location.json');
-  const dataObject = locationDataArray[0];
-  const searchedCity = request.query.city;
-
-  const newLocation = new Location(searchedCity, 
-    dataObject.display_name,
-    dataObject.lat,
-    dataObject.lon);
-
-  response.send(newLocation);
-});
-
 function Weather(weather,valid_date) {
   this.forecast = weather;
   this.time = valid_date;
 }
 
-app.get('/weather', (request, response) => {
-  const weatherDataArray = require('./data/weather.json');
-  const dataObject = weatherDataArray.data[0];
+app.get('/location', (request,response) => {
+  const apiKey = process.env.GEOCODE_API_KEY;
+  const searchedCity = request.query.city;
+  const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${searchedCity}&format=json`;
 
-  const newWeather = new Weather(dataObject.weather.description,dataObject.valid_date);
-  response.send(newWeather);
+  superagent.get(url).then(apiReturned => {
+    const newLocation = newLocation(searchedCity, apiReturned.body.formatted_query, apiReturned.body.latitude, apiReturned.body.longitude);
+    response.status(200).send(newLocation);
+  }).catch(error => {
+    response.status(500).send('There was an error');
+  })
 });
 
-//default error reporting
-app.use('*', (request, response) => {
-  response.send('Invalid request, something went wrong.');
+
+app.get('/weather', (request, response) => {
+  const latitude = parseFloat(request.query.latitude);
+  const longitude = parseFloat(request.query.longitude);
+  const searchedCity = request.query.city;
+  const apiKey = process.env.WEATHER_API_KEY;
+  const url = `http://api.weatherbit.io/v2.0/forecast/daily`;
+  const searchParameters = {
+    key:apiKey, city:searchedCity, days:8
+  };
+
+  const weatherArr = [];
+  superagent.get(url).query(searchParameters).then(returnData => {
+    returnData.body.data.map( day => {
+      weatherArr.push(new Weather(day.weather.description,day.valid_date));
+    })
+    response.status(200).send(weatherArray);
+  }).catch(error => {
+    response.status(500).send('There was an error');
+  })
+});
+
+app.use('*', (req,res) => {
+  res.status(500).send('Status: 500<br> Server has error');
 });
