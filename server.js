@@ -48,7 +48,7 @@ app.get('/location', (request,response) => {
 app.get('/weather', (request, response) => {
   const latitude = parseFloat(request.query.latitude);
   const longitude = parseFloat(request.query.longitude);
-  const searchedCity = request.query.city;
+  const searchedCity = request.query.search_query;
   const apiKey = process.env.WEATHER_API_KEY;
   const url = `http://api.weatherbit.io/v2.0/forecast/daily`;
   const searchParameters = {
@@ -60,7 +60,7 @@ app.get('/weather', (request, response) => {
     returnData.body.data.map( day => {
       weatherArr.push(new Weather(day.weather.description,day.valid_date));
     })
-    response.status(200).send(weatherArray);
+    response.status(200).send(weatherArr);
   }).catch(error => {
     response.status(500).send('There was an error');
   })
